@@ -13,7 +13,7 @@ from homeassistant.components.climate.const import (
     DOMAIN, HVAC_MODE_HEAT,HVAC_MODE_COOL, HVAC_MODE_OFF,
     SUPPORT_TARGET_TEMPERATURE, SUPPORT_FAN_MODE)
 from homeassistant.const import (
-    ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN,
+    ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN, CONF_DEVICE_ID,
     STATE_ON, STATE_OFF, TEMP_CELSIUS)
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import generate_entity_id
@@ -37,6 +37,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Required(CONF_NAME): cv.string,
     vol.Required(CONF_TOKEN): cv.string,
+    vol.Optional(CONF_DEVICE_ID): cv.string,
     vol.Optional(CONF_MODEL, default=None): vol.In(
     ['zhimi.heater.mc2',
      'zhimi.heater.zb1',
@@ -49,6 +50,7 @@ SET_ROOM_TEMP_SCHEMA = vol.Schema({
 
 DEVICE_MODEL = ""
 ATTR_MODEL = 'model'
+DEVICE_ID = ""
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Perform the setup for Xiaomi heaters."""
@@ -56,7 +58,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     name = config.get(CONF_NAME)
     token = config.get(CONF_TOKEN)
     model = config.get(CONF_MODEL)
-
+    DEVICE_ID = config.get(CONF_DEVICE_ID)
 
     _LOGGER.info("Initializing Xiaomi heaters with host %s (token %s...)", host, token[:5])
 
@@ -176,10 +178,9 @@ class MiHeater(ClimateEntity):
             #DEVICE_MODEL = device_info.model
 
             if self._model == "zhimi.heater.mc2":
-                power=self._device.raw_command('get_properties', [{"siid":2,"piid":1}])
-                #humidity=self._device.raw_command('get_properties', [{"siid":5,"piid":7}])
-                target_temperature=self._device.raw_command('get_properties', [{"siid":2,"piid":5}])
-                current_temperature=self._device.raw_command('get_properties', [{"siid":4,"piid":7}])
+                power=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":1}])
+                target_temperature=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":5}])
+                current_temperature=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":4,"piid":7}])
                 data['humidity']  = 0
             elif self._model == "zhimi.heater.zb1" or self._model == "zhimi.heater.za2" :
                 power=self._device.raw_command('get_properties', [{"siid":2,"piid":2}])

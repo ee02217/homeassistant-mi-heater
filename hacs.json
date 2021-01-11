@@ -2,6 +2,6 @@
     "name": "miHeater",
     "country": "PT",
     "domains": ["climate"],
-    "homeassistant": "0.118.5",
+    "homeassistant": "0.118.6",
     "iot_class": ["Local Polling"]
 }
