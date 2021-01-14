@@ -232,7 +232,7 @@ class MiHeater(ClimateEntity):
         #DEVICE_MODEL = device_info.model      
         
         if self._model == "zhimi.heater.mc2":              
-            self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":5}])
+            self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":5, "did":DEVICE_ID}])
         elif self._model == "zhimi.heater.zb1" or self._model == "zhimi.heater.za2" :
             self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":6}])
         else:  
@@ -245,7 +245,7 @@ class MiHeater(ClimateEntity):
         #DEVICE_MODEL = device_info.model      
         
         if self._model == "zhimi.heater.mc2":              
-            self._device.raw_command('set_properties',[{"value":True,"siid":2,"piid":1}])
+            self._device.raw_command('set_properties',[{"value":True,"siid":2,"piid":1, "did":DEVICE_ID}])
         elif self._model == "zhimi.heater.zb1" or self._model == "zhimi.heater.za2" :
             self._device.raw_command('set_properties',[{"value":True,"siid":2,"piid":2}])
         else:  
@@ -258,7 +258,7 @@ class MiHeater(ClimateEntity):
         #DEVICE_MODEL = device_info.model      
         
         if self._model == "zhimi.heater.mc2":              
-            self._device.raw_command('set_properties',[{"value":False,"siid":2,"piid":1}])
+            self._device.raw_command('set_properties',[{"value":False,"siid":2,"piid":1, "did":DEVICE_ID}])
         elif self._model == "zhimi.heater.zb1" or self._model == "zhimi.heater.za2" :
             self._device.raw_command('set_properties',[{"value":False,"siid":2,"piid":2}])
         else:  
