@@ -171,14 +171,17 @@ class MiHeater(ClimateEntity):
         return 1
     def getAttrData(self):
 
+        try: 
+            _LOGGER.warning( self._device.get_properties(['current_temperature'], 1))
+        except DeviceException:
+            _LOGGER.exception('Fail to get_prop from Xiaomi heater')
+
         try:
             data = {}
 
             #device_info = self._device.info()
             #DEVICE_MODEL = device_info.model
-
-            _LOGGER.warning( self._device.get_properties(['current_temperature', 'humidity'], 1))
-           
+               
             if self._model == "zhimi.heater.mc2":
                 power=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":1}])
                 target_temperature=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":5}])
