@@ -88,7 +88,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             """Set room temp."""
             
             if DEVICE_MODEL == "zhimi.heater.mc2":
-                aux = device.raw_command('get_properties', [{"siid":2,"piid":5}])
+                aux = device.raw_command('get_properties', [{"siid":2,"piid":5,"did":DEVICE_ID}])
             elif DEVICE_MODEL == "zhimi.heater.zb1" or DEVICE_MODEL == "zhimi.heater.za2":
                 aux = device.raw_command('get_properties', [{"siid":2,"piid":6}])
             else  :  
@@ -177,6 +177,8 @@ class MiHeater(ClimateEntity):
             #device_info = self._device.info()
             #DEVICE_MODEL = device_info.model
 
+            _LOGGER.warning( self._device.get_properties(['current_temperature', 'humidity'], 1))
+           
             if self._model == "zhimi.heater.mc2":
                 power=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":1}])
                 target_temperature=self._device.raw_command('get_properties', [{"did":DEVICE_ID,"siid":2,"piid":5}])
