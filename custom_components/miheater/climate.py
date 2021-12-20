@@ -43,7 +43,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     ['zhimi.heater.mc2',
      'zhimi.heater.zb1',
      'zhimi.heater.za2',
-     'zhimi.heater.za1', None]),
+     'zhimi.heater.za1',
+     'leshow.heater.bs1',
+     None]),
 })
 
 SET_ROOM_TEMP_SCHEMA = vol.Schema({
@@ -95,6 +97,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 aux = device.raw_command('get_properties', [{"siid":2,"piid":6}])
             elif DEVICE_MODEL == "zhimi.heater.za1":
                 aux = device.raw_command('get_properties', [{"siid":3,"piid":1}])
+            elif DEVICE_MODEL == "leshow.heater.bs1":
+                aux = device.raw_command('get_properties', [{"siid":2,"piid":3}])
             else  :  
                 _LOGGER.exception('Unsupported model: %s', DEVICE_MODEL)
 
@@ -198,6 +202,11 @@ class MiHeater(ClimateEntity):
                 target_temperature=self._device.raw_command('get_properties', [{"siid":2,"piid":2}])
                 current_temperature=self._device.raw_command('get_properties', [{"siid":3,"piid":1}])
                 data['humidity'] = 0
+            elif self._model == "leshow.heater.bs1" :
+                power=self._device.raw_command('get_properties', [{"siid":2,"piid":1}])
+                target_temperature=self._device.raw_command('get_properties', [{"siid":2,"piid":3}])
+                current_temperature=self._device.raw_command('get_properties', [{"siid":2,"piid":4}])
+                data['humidity'] = 0
             else:  
                 _LOGGER.exception('Unsupported model: %s', self._model)
 
@@ -250,6 +259,8 @@ class MiHeater(ClimateEntity):
             self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":6}])
         elif self._model == "zhimi.heater.za1" :
             self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":2}])
+        elif self._model == "leshow.heater.bs1" :
+            self._device.raw_command('set_properties',[{"value":int(temperature),"siid":2,"piid":3}])
         else:  
             _LOGGER.exception('Unsupported model: %s', self._model)
 
@@ -265,6 +276,8 @@ class MiHeater(ClimateEntity):
             self._device.raw_command('set_properties',[{"value":True,"siid":2,"piid":2}])
         elif self._model == "zhimi.heater.za1" :
             self._device.raw_command('set_properties',[{"value":True,"siid":2,"piid":1}])
+        elif self._model == "leshow.heater.bs1" :
+            self._device.raw_command('set_properties',[{"value":1,"siid":2,"piid":1}])
         else:  
             _LOGGER.exception('Unsupported model: %s', self._model)        
         
@@ -280,6 +293,8 @@ class MiHeater(ClimateEntity):
             self._device.raw_command('set_properties',[{"value":False,"siid":2,"piid":2}])
         elif self._model == "zhimi.heater.za1" :
             self._device.raw_command('set_properties',[{"value":False,"siid":2,"piid":1}])
+        elif self._model == "leshow.heater.bs1" :
+            self._device.raw_command('set_properties',[{"value":0,"siid":2,"piid":1}])
         else:  
             _LOGGER.exception('Unsupported model: %s', self._model)    
         
