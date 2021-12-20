@@ -44,8 +44,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
      'zhimi.heater.zb1',
      'zhimi.heater.za2',
      'zhimi.heater.za1',
-     'leshow.heater.bs1',
-     None]),
+     'leshow.heater.bs1', None]),
 })
 
 SET_ROOM_TEMP_SCHEMA = vol.Schema({
