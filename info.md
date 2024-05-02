@@ -1,6 +1,6 @@
 # Home Assistant Integration for zhimi.heaters
   Modified component what was not correctly worked in HASS new version.
-  Tested on zhimi.heater.mc2
+  Tested on zhimi.heater.mc2 and zhimi.heater.mc2a
   Tested on zhimi.heater.zb1
   Tested on zhimi.heater.za2 (some issues reported)
 
@@ -28,7 +28,7 @@ climate:
     host: <your device ip address>
     token: <your device miio token>
     name: xiaomi_heater
-    model: zhimi.heater.mc2 (optional: zhimi.heater.mc2 | zhimi.heater.zb1 | zhimi.heater.za2)
+    model: zhimi.heater.mc2 (optional: zhimi.heater.mc2 | zhimi.heater.mc2a | zhimi.heater.zb1 | zhimi.heater.za2)
 ````
 
 

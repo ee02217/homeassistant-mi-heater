@@ -1,14 +1,14 @@
-# homeassistant-mi-heater for zhimi.heater.mc2, zhimi.heater.zb1 and zhimi.heater.za2
+# homeassistant-mi-heater for zhimi.heater.mc2, zhimi.heater.mc2a, zhimi.heater.zb1 and zhimi.heater.za2
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 - Modified component what was not correctly worked in HASS new version.
-- Tested on zhimi.heater.mc2
+- Tested on zhimi.heater.mc2 and zhimi.heater.mc2a
 - Tested on zhimi.heater.zb1
 - Tested on zhimi.heater.za2 (some issues reported. If someone has the correct raw codes working, I can integrate)
 
 
 
 
-Xiaomi Smart Space Heater S（zhimi.heater.mc2） component for home-assistant
+Xiaomi Smart Space Heater S（zhimi.heater.mc2 or zhimi.heater.mc2a） component for home-assistant
 ![p](https://cdn.weasy.io/users/xiaomi/catalog/mi_smart_space_heater_s.jpg)
 
 Xiaomi Mi Smart Space Heater 1S (zhimi.heater.zb1) component for home-assistant
@@ -39,7 +39,7 @@ climate:
     host: <your device ip address>
     token: <your device miio token>
     name: xiaomi_heater
-    model: zhimi.heater.mc2 (optional: zhimi.heater.mc2 | zhimi.heater.zb1 | zhimi.heater.za2)
+    model: zhimi.heater.mc2 (optional: zhimi.heater.mc2 | zhimi.heater.mc2a | zhimi.heater.zb1 | zhimi.heater.za2)
 ````
 
 
