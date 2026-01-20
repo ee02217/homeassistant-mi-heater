@@ -13,7 +13,8 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the device."
+      "cannot_connect": "Failed to connect to the device.",
+      "unsupported_model": "This heater model is not supported."
     }
   }
 }

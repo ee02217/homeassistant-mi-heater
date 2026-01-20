@@ -1,152 +1,216 @@
-"""Platform for climate integration of Mi Heater."""
+"""Climate platform for Xiaomi miHeater integration."""
 
-import logging
+from __future__ import annotations
+
 from datetime import timedelta
+import logging
+
+from miio import Device, DeviceException
 
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
-    SUPPORT_TARGET_TEMPERATURE,
-    HVAC_MODE_AUTO,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
-)
-from homeassistant.const import (
-    ATTR_TEMPERATURE,
-    TEMP_CELSIUS,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.components.climate.const import ClimateEntityFeature, HVAC_MODE_HEAT, HVAC_MODE_OFF
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN, TEMP_CELSIUS
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 
-from .const import DOMAIN, DEFAULT_UPDATE_INTERVAL
+from .const import CONF_MODEL, DOMAIN, MAX_TEMP, MIN_TEMP, MODEL_PROPERTIES
 
 _LOGGER = logging.getLogger(__name__)
 
-# Import the device library
-from miio import DeviceException
-from miio.heater import MiHeater
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
-    """Set up Mi Heater climate device based on a config entry."""
-    host = entry.data.get("host")
-    token = entry.data.get("token")
-    name = "Mi Heater"
+class MiHeaterApi:
+    """API wrapper for miHeater."""
 
-    # Initialize the device
-    device = MiHeater(host, token)
+    def __init__(self, hass: HomeAssistant, host: str, token: str, model: str) -> None:
+        self._hass = hass
+        self._device = Device(host, token)
+        self._model = model
 
-    # Create a DataUpdateCoordinator to manage data updates
-    coordinator = MiHeaterDataUpdateCoordinator(hass, device)
+    async def _async_raw_command(self, method: str, params: list[dict]) -> list[dict]:
+        def _raw() -> list[dict]:
+            return self._device.raw_command(method, params)
 
-    # Fetch initial data
-    await coordinator.async_config_entry_first_refresh()
+        return await self._hass.async_add_executor_job(_raw)
 
-    # Create and add the entity
-    async_add_entities([MiHeaterClimate(coordinator, name, entry.entry_id)], True)
+    async def async_get_status(self) -> dict:
+        """Fetch device status."""
+        if self._model not in MODEL_PROPERTIES:
+            raise UpdateFailed(f"Unsupported model: {self._model}")
 
-class MiHeaterDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching data from the Mi Heater device."""
+        props = MODEL_PROPERTIES[self._model]
+        data: dict[str, int | float | bool] = {}
 
-    def __init__(self, hass: HomeAssistant, device: MiHeater):
-        """Initialize the coordinator."""
-        self.device = device
-        super().__init__(
-            hass,
-            _LOGGER,
-            name="Mi Heater Data Update",
-            update_interval=timedelta(seconds=DEFAULT_UPDATE_INTERVAL),
+        try:
+            power = await self._async_raw_command(
+                "get_properties",
+                [{"siid": props["power"][0], "piid": props["power"][1]}],
+            )
+            target = await self._async_raw_command(
+                "get_properties",
+                [
+                    {
+                        "siid": props["target_temperature"][0],
+                        "piid": props["target_temperature"][1],
+                    }
+                ],
+            )
+            current = await self._async_raw_command(
+                "get_properties",
+                [
+                    {
+                        "siid": props["current_temperature"][0],
+                        "piid": props["current_temperature"][1],
+                    }
+                ],
+            )
+            humidity_value = 0
+            if props["humidity"] is not None:
+                humidity = await self._async_raw_command(
+                    "get_properties",
+                    [
+                        {
+                            "siid": props["humidity"][0],
+                            "piid": props["humidity"][1],
+                        }
+                    ],
+                )
+                humidity_value = humidity[0]["value"]
+
+            data["power"] = power[0]["value"]
+            data["target_temperature"] = target[0]["value"]
+            data["current_temperature"] = current[0]["value"]
+            data["humidity"] = humidity_value
+        except DeviceException as err:
+            raise UpdateFailed(f"Failed to fetch heater data: {err}") from err
+
+        return data
+
+    async def async_set_temperature(self, temperature: int) -> None:
+        """Set target temperature."""
+        props = MODEL_PROPERTIES[self._model]
+        await self._async_raw_command(
+            "set_properties",
+            [
+                {
+                    "value": int(temperature),
+                    "siid": props["target_temperature"][0],
+                    "piid": props["target_temperature"][1],
+                }
+            ],
         )
 
-    async def _async_update_data(self):
-        """Fetch data from the device."""
-        try:
-            data = await self.hass.async_add_executor_job(self.device.status)
-            return data
-        except DeviceException as error:
-            raise UpdateFailed(f"Error fetching data: {error}") from error
+    async def async_set_power(self, on: bool) -> None:
+        """Turn device on or off."""
+        props = MODEL_PROPERTIES[self._model]
+        await self._async_raw_command(
+            "set_properties",
+            [
+                {
+                    "value": bool(on),
+                    "siid": props["power"][0],
+                    "piid": props["power"][1],
+                }
+            ],
+        )
 
-class MiHeaterClimate(ClimateEntity):
-    """Representation of the Mi Heater climate device."""
 
-    def __init__(self, coordinator: MiHeaterDataUpdateCoordinator, name: str, entry_id: str):
-        """Initialize the climate device."""
-        self.coordinator = coordinator
-        self._name = name
-        self._unique_id = entry_id
-        self._supported_features = SUPPORT_TARGET_TEMPERATURE
-        self._hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
-        self._attr_temperature_unit = TEMP_CELSIUS
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+) -> None:
+    """Set up miHeater climate entities from config entry."""
+    host = entry.data[CONF_HOST]
+    token = entry.data[CONF_TOKEN]
+    model = entry.data[CONF_MODEL]
+    name = entry.data[CONF_NAME]
+
+    if model not in MODEL_PROPERTIES:
+        _LOGGER.error("Unsupported miHeater model: %s", model)
+        raise ConfigEntryNotReady
+
+    api = MiHeaterApi(hass, host, token, model)
+    coordinator = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name=f"{DOMAIN}_{entry.entry_id}",
+        update_method=api.async_get_status,
+        update_interval=timedelta(seconds=30),
+    )
+
+    await coordinator.async_config_entry_first_refresh()
+
+    async_add_entities(
+        [MiHeaterEntity(name, model, api, coordinator, entry.unique_id)]
+    )
+
+
+class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
+    """Representation of a Xiaomi Heater as a climate entity."""
+
+    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
+    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_min_temp = MIN_TEMP
+    _attr_max_temp = MAX_TEMP
+    _attr_target_temperature_step = 1
+
+    def __init__(
+        self,
+        name: str,
+        model: str,
+        api: MiHeaterApi,
+        coordinator: DataUpdateCoordinator,
+        unique_id: str | None,
+    ) -> None:
+        self._api = api
+        self._attr_name = name
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, unique_id or name)},
+            manufacturer="Xiaomi",
+            model=model,
+            name=name,
+        )
+        self._attr_unique_id = unique_id
+        super().__init__(coordinator)
 
     @property
-    def name(self):
-        """Return the name of the climate device."""
-        return self._name
+    def hvac_mode(self) -> str:
+        return HVAC_MODE_HEAT if self.coordinator.data["power"] else HVAC_MODE_OFF
 
     @property
-    def unique_id(self):
-        """Return the unique ID of the climate device."""
-        return self._unique_id
+    def target_temperature(self) -> float | None:
+        return self.coordinator.data["target_temperature"]
 
     @property
-    def supported_features(self):
-        """Return the list of supported features."""
-        return self._supported_features
+    def current_temperature(self) -> float | None:
+        return self.coordinator.data["current_temperature"]
 
     @property
-    def hvac_modes(self):
-        """Return the list of available HVAC modes."""
-        return self._hvac_modes
-
-    @property
-    def hvac_mode(self):
-        """Return the current HVAC mode."""
-        if self.coordinator.data.is_on:
-            return HVAC_MODE_HEAT
-        return HVAC_MODE_OFF
-
-    @property
-    def current_temperature(self):
-        """Return the current temperature."""
-        return self.coordinator.data.temperature
-
-    @property
-    def target_temperature(self):
-        """Return the temperature we try to reach."""
-        return self.coordinator.data.target_temperature
-
-    @property
-    def min_temp(self):
-        """Return the minimum temperature."""
-        return 16  # Adjust based on device capabilities
-
-    @property
-    def max_temp(self):
-        """Return the maximum temperature."""
-        return 32  # Adjust based on device capabilities
+    def current_humidity(self) -> int | None:
+        return self.coordinator.data["humidity"]
 
     async def async_set_temperature(self, **kwargs) -> None:
         temperature = kwargs.get(ATTR_TEMPERATURE)
-        if temperature is not None:
-            await self.hass.async_add_executor_job(
-                self.coordinator.device.set_target_temperature, temperature
-            )
-            await self.coordinator.async_request_refresh()
-
-    async def async_set_hvac_mode(self, hvac_mode):
-        """Set new target HVAC mode."""
-        if hvac_mode == HVAC_MODE_HEAT:
-            await self.hass.async_add_executor_job(self.coordinator.device.on)
-        elif hvac_mode == HVAC_MODE_OFF:
-            await self.hass.async_add_executor_job(self.coordinator.device.off)
-        else:
-            _LOGGER.error("Unsupported HVAC mode: %s", hvac_mode)
+        if temperature is None:
             return
+        await self._api.async_set_temperature(int(temperature))
         await self.coordinator.async_request_refresh()
 
-    async def async_update(self):
-        """Fetch new state data for the entity."""
+    async def async_set_hvac_mode(self, hvac_mode: str) -> None:
+        if hvac_mode == HVAC_MODE_HEAT:
+            await self._api.async_set_power(True)
+        elif hvac_mode == HVAC_MODE_OFF:
+            await self._api.async_set_power(False)
         await self.coordinator.async_request_refresh()
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return {
+            "humidity": self.coordinator.data["humidity"],
+        }
