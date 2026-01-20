@@ -8,7 +8,7 @@ import logging
 from miio import Device, DeviceException
 
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import ClimateEntityFeature, HVAC_MODE_HEAT, HVAC_MODE_OFF
+from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
@@ -154,7 +154,7 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
     """Representation of a Xiaomi Heater as a climate entity."""
 
     _attr_temperature_unit = TEMP_CELSIUS
-    _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_min_temp = MIN_TEMP
     _attr_max_temp = MAX_TEMP
@@ -181,7 +181,7 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
 
     @property
     def hvac_mode(self) -> str:
-        return HVAC_MODE_HEAT if self.coordinator.data["power"] else HVAC_MODE_OFF
+        return HVACMode.HEAT if self.coordinator.data["power"] else HVACMode.OFF
 
     @property
     def target_temperature(self) -> float | None:
@@ -203,9 +203,9 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
-        if hvac_mode == HVAC_MODE_HEAT:
+        if hvac_mode == HVACMode.HEAT:
             await self._api.async_set_power(True)
-        elif hvac_mode == HVAC_MODE_OFF:
+        elif hvac_mode == HVACMode.OFF:
             await self._api.async_set_power(False)
         await self.coordinator.async_request_refresh()
 
