@@ -128,8 +128,7 @@ class MiHeaterClimate(ClimateEntity):
         """Return the maximum temperature."""
         return 32  # Adjust based on device capabilities
 
-    async def async_set_temperature(self, **kwargs):
-        """Set new target temperature."""
+    async def async_set_temperature(self, **kwargs) -> None:
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is not None:
             await self.hass.async_add_executor_job(
