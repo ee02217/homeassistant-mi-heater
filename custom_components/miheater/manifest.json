@@ -3,6 +3,7 @@
   "name": "miHeater",
   "config_flow": true,
   "documentation": "https://github.com/ee02217/homeassistant-mi-heater",
+  "requirements": ["python-miio>=0.5.4"],
   "dependencies": [],
   "codeowners": [],
   "requirements": ["python-miio>=0.5.0"],
