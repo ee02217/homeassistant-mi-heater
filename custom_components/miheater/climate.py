@@ -76,23 +76,9 @@ class MiHeaterApi:
                     }
                 ],
             )
-            humidity_value = 0
-            if props["humidity"] is not None:
-                humidity = await self._async_raw_command(
-                    "get_properties",
-                    [
-                        {
-                            "siid": props["humidity"][0],
-                            "piid": props["humidity"][1],
-                        }
-                    ],
-                )
-                humidity_value = humidity[0]["value"]
-
             data["power"] = power[0]["value"]
             data["target_temperature"] = target[0]["value"]
             data["current_temperature"] = current[0]["value"]
-            data["humidity"] = humidity_value
         except DeviceException as err:
             raise UpdateFailed(f"Failed to fetch heater data: {err}") from err
 
@@ -197,10 +183,6 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
     def current_temperature(self) -> float | None:
         return self.coordinator.data["current_temperature"]
 
-    @property
-    def current_humidity(self) -> int | None:
-        return self.coordinator.data["humidity"]
-
     async def async_set_temperature(self, **kwargs) -> None:
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
@@ -214,9 +196,3 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
         elif hvac_mode == HVACMode.OFF:
             await self._api.async_set_power(False)
         await self.coordinator.async_request_refresh()
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        return {
-            "humidity": self.coordinator.data["humidity"],
-        }
