@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Xiaomi Heater",
+        "description": "Set up your Xiaomi heater.",
+        "data": {
+          "host": "Host",
+          "token": "Token",
+          "name": "Name",
+          "model": "Model (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the device."
+    }
+  }
+}
