@@ -10,7 +10,13 @@ from miio import Device, DeviceException
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN, TEMP_CELSIUS
+from homeassistant.const import (
+    ATTR_TEMPERATURE,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_TOKEN,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -70,23 +76,9 @@ class MiHeaterApi:
                     }
                 ],
             )
-            humidity_value = 0
-            if props["humidity"] is not None:
-                humidity = await self._async_raw_command(
-                    "get_properties",
-                    [
-                        {
-                            "siid": props["humidity"][0],
-                            "piid": props["humidity"][1],
-                        }
-                    ],
-                )
-                humidity_value = humidity[0]["value"]
-
             data["power"] = power[0]["value"]
             data["target_temperature"] = target[0]["value"]
             data["current_temperature"] = current[0]["value"]
-            data["humidity"] = humidity_value
         except DeviceException as err:
             raise UpdateFailed(f"Failed to fetch heater data: {err}") from err
 
@@ -153,7 +145,7 @@ async def async_setup_entry(
 class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
     """Representation of a Xiaomi Heater as a climate entity."""
 
-    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_min_temp = MIN_TEMP
@@ -191,10 +183,6 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
     def current_temperature(self) -> float | None:
         return self.coordinator.data["current_temperature"]
 
-    @property
-    def current_humidity(self) -> int | None:
-        return self.coordinator.data["humidity"]
-
     async def async_set_temperature(self, **kwargs) -> None:
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
@@ -208,9 +196,3 @@ class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
         elif hvac_mode == HVACMode.OFF:
             await self._api.async_set_power(False)
         await self.coordinator.async_request_refresh()
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        return {
-            "humidity": self.coordinator.data["humidity"],
-        }
