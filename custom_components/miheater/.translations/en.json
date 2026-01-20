@@ -1,0 +1,21 @@
+{
+    "config": {
+      "title": "Mi Heater",
+      "step": {
+        "user": {
+          "title": "Configure Mi Heater",
+          "description": "Set up your Mi Heater device.",
+          "data": {
+            "host": "Host",
+            "token": "Token"
+          }
+        }
+      },
+      "error": {
+        "cannot_connect": "Failed to connect to the device. Please check the host and token.",
+        "invalid_token": "The token provided is invalid.",
+        "unknown": "An unknown error occurred."
+      }
+    }
+  }
+  
