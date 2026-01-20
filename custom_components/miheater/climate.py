@@ -10,7 +10,13 @@ from miio import Device, DeviceException
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, CONF_HOST, CONF_NAME, CONF_TOKEN, TEMP_CELSIUS
+from homeassistant.const import (
+    ATTR_TEMPERATURE,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_TOKEN,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -153,7 +159,7 @@ async def async_setup_entry(
 class MiHeaterEntity(CoordinatorEntity, ClimateEntity):
     """Representation of a Xiaomi Heater as a climate entity."""
 
-    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_min_temp = MIN_TEMP
