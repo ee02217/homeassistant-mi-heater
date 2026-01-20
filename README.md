@@ -59,6 +59,8 @@ The integration registers a few handy services for supported models:
 | `miheater.set_led_brightness` | Set LED brightness | `brightness` (`on` / `off` / `dim`) |
 | `miheater.set_delay_off` | Set delayed power-off | `seconds` (integer) |
 
+The delay-off number entity is shown in minutes in Home Assistant.
+
 > Tip: The `dim` LED mode is only supported by **zhimi.heater.za2**.
 
 ## 🔐 Token notes
