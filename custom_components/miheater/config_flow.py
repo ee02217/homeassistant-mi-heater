@@ -13,6 +13,8 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_MODEL, DEFAULT_NAME, DOMAIN, MODEL_PROPERTIES
 
+AUTO_MODEL = "auto"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -37,12 +39,13 @@ class MiHeaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
 
+        model_options = [AUTO_MODEL, *MODEL_PROPERTIES.keys()]
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_HOST): str,
                 vol.Required(CONF_TOKEN): str,
                 vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
-                vol.Optional(CONF_MODEL): str,
+                vol.Optional(CONF_MODEL, default=AUTO_MODEL): vol.In(model_options),
             }
         )
 
@@ -60,7 +63,7 @@ class MiHeaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.warning("Unable to connect to miHeater: %s", err)
                 errors["base"] = "cannot_connect"
             else:
-                if not model:
+                if not model or model == AUTO_MODEL:
                     model = detected_model
 
                 if model not in MODEL_PROPERTIES:

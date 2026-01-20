@@ -1,61 +1,73 @@
-# homeassistant-mi-heater for zhimi.heater.mc2, zhimi.heater.zb1 and zhimi.heater.za2
+# Xiaomi miHeater Integration for Home Assistant
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-- Modified component what was not correctly worked in HASS new version.
-- Tested on zhimi.heater.mc2
-- Tested on zhimi.heater.zb1
-- Tested on zhimi.heater.za2 (some issues reported. If someone has the correct raw codes working, I can integrate)
 
+Welcome to a feature-rich Xiaomi heater integration that makes your winter setup feel smart, cozy, and effortless. This custom component uses the MiOT protocol and brings rich device controls directly into Home Assistant.
 
+## ✅ Supported models
+* **zhimi.heater.mc2** — Xiaomi Smart Space Heater S
+* **zhimi.heater.mc2a** — Xiaomi Smart Space Heater S (variant)
+* **zhimi.heater.zb1** — Xiaomi Mi Smart Space Heater 1S
+* **zhimi.heater.za2** — Xiaomi Smart Space Heater 1S
+* **leshow.heater.bs1s** — Leshow Smart Heater
 
+If your heater reports a different model, open an issue with the model string and we can add it.
 
-Xiaomi Smart Space Heater S（zhimi.heater.mc2） component for home-assistant
-![p](https://cdn.weasy.io/users/xiaomi/catalog/mi_smart_space_heater_s.jpg)
+## ✨ Features
+**Core climate control**
+* Power on/off (HVAC mode)
+* Target temperature control
+* Current temperature reporting
+* Configurable min/max temperature range per model
 
-Xiaomi Mi Smart Space Heater 1S (zhimi.heater.zb1) component for home-assistant
-![p](https://www.powerplanetonline.com/cdnassets/calefactor_electrico_xiaomi_mi_smart_space_heater_1s_01_l.jpg)
+**Device extras**
+* Buzzer toggle (where supported)
+* Child lock toggle (where supported)
+* LED indicator brightness (On/Off/Dim — Dim is supported on zhimi.heater.za2)
+* Delay-off timer with bounds per model
+* Humidity reporting (where supported)
 
+**Home Assistant UX**
+* Config flow with automatic device model detection
+* Manual model selection via a pick list of supported models
+* Extra state attributes for quick access to device-specific features
 
-### Install through HACS:
+![Heater UI](https://github.com/ee02217/desktop-tutorial/blob/main/heater.PNG?raw=true)
 
-Add a custom repository in HACS pointed to https://github.com/ee02217/homeassistant-mi-heater
+## 🧩 Installation
+### Install through HACS
+1. Add a custom repository in HACS: `https://github.com/ee02217/homeassistant-mi-heater`
+2. Search for **miHeater** under Integrations.
+3. Click **Install** and restart Home Assistant.
 
-The new integration for miHeater should appear under your integrations tab.
+### Install manually
+1. Copy the contents of `custom_components/miheater/` into your Home Assistant `custom_components` directory.
+2. Restart Home Assistant.
 
-Click Install and restart Home Assistant.
+## ⚙️ Configuration (UI)
+1. Go to **Settings → Devices & Services → Add Integration**.
+2. Search for **miHeater**.
+3. Enter your device IP and token.
+4. Choose the model from the pick list (or leave it on **auto** to detect it).
 
-### Install manually:
+## 🛠️ Services
+The integration registers a few handy services for supported models:
 
-Copy the contents found in https://github.com/ee02217/homeassistant-mi-heater/tree/master/custom_components/miheater/ to your custom_components folder in Home Assistant.
+| Service | Description | Fields |
+| --- | --- | --- |
+| `miheater.set_child_lock` | Toggle child lock | `lock` (boolean) |
+| `miheater.set_buzzer` | Toggle buzzer | `enabled` (boolean) |
+| `miheater.set_led_brightness` | Set LED brightness | `brightness` (`on` / `off` / `dim`) |
+| `miheater.set_delay_off` | Set delayed power-off | `seconds` (integer) |
 
-Restart Home Assistant.
-_____________________________________________________________________________________________________________________________
+> Tip: The `dim` LED mode is only supported by **zhimi.heater.za2**.
 
+## 🔐 Token notes
+The token must be obtained from the Xiaomi Mi Home app database (`miio2.db`), not from `miio discover`.
 
-### Configuration.yaml
+## 📌 Troubleshooting
+* If your model is not detected, select it manually in the config flow.
+* If a feature is not available, it will simply be hidden or ignored for that model.
 
-````
-climate:
-  - platform: miheater
-    host: <your device ip address>
-    token: <your device miio token>
-    name: xiaomi_heater
-    model: zhimi.heater.mc2 (optional: zhimi.heater.mc2 | zhimi.heater.zb1 | zhimi.heater.za2)
-````
+---
 
-
-### Features
-
-* supporting power on/off
-* supporting setting temperature
-* supporting read temperature from device
-
-![xx](https://github.com/ee02217/desktop-tutorial/blob/main/heater.PNG?raw=true)
-
-
-
-
-### TODO
-
-- <s>make device detection in code persistent (instead of querying device everytime</s>
-- improve documentation and service description
-- <s>make hacs compatible</s>
+Made with warmth and automation in mind. 🔥
