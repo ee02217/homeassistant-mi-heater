@@ -1,9 +1,6 @@
-"""Constants for the Xiaomi miHeater integration."""
-
 DOMAIN = "miheater"
 
-CONF_MODEL = "model"
-DEFAULT_NAME = "Xiaomi Heater"
+CONF_HOST = "host"
+CONF_TOKEN = "token"
 
-MIN_TEMP = 18
-MAX_TEMP = 28
+DEFAULT_UPDATE_INTERVAL = 30

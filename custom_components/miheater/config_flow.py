@@ -1,82 +1,63 @@
-"""Config flow for Xiaomi miHeater integration."""
-
-from __future__ import annotations
-
 import logging
-
 import voluptuous as vol
-from miio import Device, DeviceException
-
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
-from homeassistant.core import HomeAssistant
+from homeassistant.core import callback
+from homeassistant.helpers import config_validation as cv
 
-from .const import CONF_MODEL, DEFAULT_NAME, DOMAIN
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-
-async def _async_get_device_info(
-    hass: HomeAssistant, host: str, token: str
-) -> tuple[str, str]:
-    """Fetch model and mac address from the device."""
-    def _get_info() -> tuple[str, str]:
-        device = Device(host, token)
-        info = device.info()
-        return info.model, info.mac_address
-
-    return await hass.async_add_executor_job(_get_info)
-
-
 class MiHeaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Xiaomi miHeater."""
+    """Handle a config flow for Mi Heater."""
 
     VERSION = 1
+    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
-    async def async_step_user(self, user_input: dict | None = None):
+    def __init__(self):
+        """Initialize the config flow."""
+        self._errors = {}
+
+    async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        errors: dict[str, str] = {}
+        self._errors = {}
 
         if user_input is not None:
-            host = user_input[CONF_HOST]
-            token = user_input[CONF_TOKEN]
-            name = user_input.get(CONF_NAME, DEFAULT_NAME)
-            model = user_input.get(CONF_MODEL)
-
-            try:
-                detected_model, mac = await _async_get_device_info(
-                    self.hass, host, token
-                )
-            except DeviceException as err:
-                _LOGGER.warning("Unable to connect to miHeater: %s", err)
-                errors["base"] = "cannot_connect"
+            valid = await self._test_connection(user_input)
+            if valid:
+                return self.async_create_entry(title="Mi Heater", data=user_input)
             else:
-                if not model:
-                    model = detected_model
+                self._errors["base"] = "cannot_connect"
 
-                unique_id = f"{model}-{mac}"
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title=name,
-                    data={
-                        CONF_HOST: host,
-                        CONF_TOKEN: token,
-                        CONF_NAME: name,
-                        CONF_MODEL: model,
-                    },
-                )
-
-        data_schema = vol.Schema(
-            {
-                vol.Required(CONF_HOST): str,
-                vol.Required(CONF_TOKEN): str,
-                vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
-                vol.Optional(CONF_MODEL): str,
-            }
-        )
+        data_schema = vol.Schema({
+            vol.Required("host"): str,
+            vol.Required("token"): str,
+        })
 
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id="user",
+            data_schema=data_schema,
+            errors=self._errors
         )
+
+    async def _test_connection(self, user_input):
+        """Test if the provided credentials are valid."""
+        # Implement connection testing logic here
+        return True
+
+from miio import Device, DeviceException
+
+async def _test_connection(self, user_input):
+    """Test if the provided credentials are valid."""
+    host = user_input["host"]
+    token = user_input["token"]
+
+    try:
+        device = Device(host, token)
+        # Try fetching some data to verify connection
+        info = await self.hass.async_add_executor_job(device.info)
+        _LOGGER.debug("Device info: %s", info)
+        return True
+    except DeviceException as error:
+        _LOGGER.error("Connection failed: %s", error)
+        return False
